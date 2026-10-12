@@ -1700,7 +1700,12 @@ make release-linux    # dist/: the Linux app for this machine's arch
 
 Linux needs `libgtk-3-dev` and `libwebkit2gtk-4.1-dev` for the app build
 (the Makefile adds the `gtk3` tag; with plain `go build`, pass `-tags gtk3`);
-Windows uses the WebView2 runtime that ships with the OS.
+Windows needs Microsoft Edge WebView2 runtime: the Evergreen runtime is a
+separate install (Windows 11 and Edge usually bring it; Edge's own copy
+isn't it). With none, the app says so in Windows' own message box, whose
+Help button opens the guide's WebView2 section, and names `winget install
+Microsoft.EdgeWebView2Runtime`; `magpie web` and `magpie tui`
+work without it.
 
 Termux uses the Android terminal build: the installer puts it in
 `$PREFIX/bin`, and `make build` selects it automatically. With plain

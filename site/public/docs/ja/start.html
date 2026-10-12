@@ -275,6 +275,15 @@ magpie claude group/opus-anywhere    <span class="c"># これを使う</span></p
     <h3 id="privacy">magpie は何を送信しますか？</h3>
     <p>プロンプト、返答、キー、アカウントは、使っているプロバイダーにだけ送られます。間に magpie 自身のサーバーはありません。リリース版の magpie は 1 日 1 回、使われていることを知らせます。何人が使っていて、何を優先して面倒を見るべきかを知るためです。送るのは、このコンピュータで作ったランダムな ID、magpie のバージョンとシステム、そして使っているエージェント、プロバイダー、モデルを magpie 自身の ID（<code>claude</code>、<code>deepseek</code>、<code>deepseek/deepseek-v4</code>）で、それぞれの数とともに。自分で追加したプロバイダーとそのモデルは <code>custom</code> とだけ記録します。プロバイダー追加シートの先頭に載るパートナーについては、1 日に表示された回数、開かれた回数、追加された回数も送ります（回数のみ）。名前、Base URL、アカウント、キー、プロンプト、使用量は送りません。<span class="ui">設定</span> → <span class="ui">プライバシー</span> → <span class="ui">使っているエージェント、プロバイダー、モデルを共有</span> でエージェント、プロバイダー、モデルとパートナーの回数を外せます。<span class="ui">ユーザー数に含める</span>、<code>DO_NOT_TRACK=1</code>、<code>MAGPIE_NO_STATS=1</code> のどれかですべてオフになります。ソースからのビルドは送信しません。パートナーの公式サイトと「キーを取得」のリンクは <code>usemagpie.ai/go/…</code> を経由し、移動の前にクリックを 1 回数えます（どのパートナーか、どのリンクか、国）。usemagpie.ai はパートナー一覧が取得された回数も数えます。これはサーバー自身が見るもので、どの Web サイトのアクセス集計とも同じく、上の設定には左右されません。ID、IP アドレス、アカウントは記録しません。プラグイン、インポートリンク、ライブラリが示すアイコンは <code>usemagpie.ai/api/icon</code> を経由して取得するので、アイコンのあるサーバーに見えるのはあなたの IP ではなく Cloudflare のアドレスです。このサーバーは画像を中継するだけで、数えることも記録することもしません。詳しくは<a href="https://github.com/yetone/magpie/blob/main/docs/reference.md#counting-users">リファレンス</a>を。</p>
 
+    <h3 id="webview2">Windows で magpie が WebView2 が必要だと言う。</h3>
+    <p>magpie のウィンドウはシステムの WebView2 ランタイムが描画しますが、Windows には同梱されていません。別途インストールするもので、Windows 11、Microsoft Edge、そしてほとんどの Windows 10 にはすでに入っています。無いとアプリはウィンドウを開けないため、何も起きないのではなくその旨を伝えます。その間も <code>magpie web</code>（ブラウザーで開く）と <code>magpie tui</code>（ターミナルで）は使えます。インストールするには、ターミナルで次のコマンドを実行するか、Microsoft の <a href="https://go.microsoft.com/fwlink/p/?LinkId=2124703">Evergreen インストーラー</a>を使ってください：</p>
+    <div class="code">
+      <span class="lang">PowerShell</span>
+      <button class="copy" data-copy="ex-webview2">コピー</button>
+      <pre id="ex-webview2">winget install Microsoft.EdgeWebView2Runtime</pre>
+    </div>
+    <p>その後 magpie を起動し直してください。magpie 自身は何もダウンロードしません。インストールはご自身で行います。</p>
+
     <h3 id="proxy-loopback">エージェントが 502 を返す、または接続できず、magpie の Routing タブに何も出ない？</h3>
     <p>プロキシアプリ（Surge、Clash、mihomo など。システムプロキシ、TUN、拡張モードのいずれかが有効）が、エージェントから <code>http://127.0.0.1:3425</code> へのリクエストを横取りして別の場所へ送っているため、magpie に届いていません。除外リスト（<code>skip-proxy</code>、バイパス）に 127.0.0.1 を書くだけでは足りないことがあります。Codex など一部のエージェントは、それでもプロキシを通します。ローカルアドレスを直結にするルールを、他のルールより前に追加してください：</p>
     <div class="code">

@@ -30,6 +30,73 @@ three.
 
 ## Constraints and failure behavior
 
+### A Windows machine with no WebView2 runtime
+
+The desktop windows are WebView2, which Windows does not ship: the
+Evergreen runtime is a separate install (the one `make release-windows`
+assumes; Edge's own copy of `EBWebView` is not it, and Wails refuses it
+with "The request is not supported"). When it is missing, Wails hands the
+failure to the app's `ErrorHandler` and exits, and the desktop build is
+linked as a GUI program with no console for that report to land in, so a
+double-click came up to nothing at all. `Run` therefore asks
+`webView2Check` just after `application.New` and before any window is
+made: `webView2Installed` reads Wails' own answer,
+`app.Env.Info().PlatformInfo["WebView2"]` ("" when the runtime is
+missing, the version otherwise), rather than repeating Wails' registry
+lookup here, so the check doesn't drift from what Wails needs as it
+changes. Reading it before `Run` is safe: the lookup reads the registry
+and makes no window and no WebView2 environment. Missing, the reader is
+shown the notice (`webView2Notice`, the reader's language via `trayLang`)
+naming the runtime, `winget install Microsoft.EdgeWebView2Runtime`,
+Microsoft's download link, and that `magpie web` and `magpie tui` need no
+WebView2; the launch then ends without starting Wails. Off Windows, and
+under `-tags nogui`, there is nothing to check. The Mac's WKWebView and
+Linux's WebKitGTK come with the system and are unchanged. See
+`TestWebView2Installed`, `TestWebView2InstalledWithRuntime`,
+`TestWebView2Check` and `TestWebView2NoticeText`.
+
+A key Wails doesn't report at all (a version that stops setting it) is
+read as installed, not missing: wrongly refusing to start a magpie that
+would have worked is worse than the silent exit the notice exists to fix.
+
+#### Why the check is not an ErrorHandler
+
+Letting Wails fail and showing the notice from `ErrorHandler` was tried
+and does not work. The handler does fire ("error calling Webview2Loader:
+no webview2 found"), but it runs on the thread Wails needs to make its
+windows, and a window shown from it does not finish: on the Windows 10
+machine it was tried on, the notice was destroyed from outside at 4.00s
+and the handler only returned at 122.31s. Wails then exits anyway.
+
+#### The notice is Windows' own message box
+
+`showWebView2Notice` shows `MessageBoxW` (`MB_OKCANCEL | MB_ICONERROR |
+MB_SETFOREGROUND | MB_TOPMOST`), so the box itself is drawn and sized by
+Windows. A CBT hook (`webView2NoticeProc`, `SetWindowsHookExW(WH_CBT, …,
+GetCurrentThreadId())` — thread-local, so no DLL is needed) relabels the
+two buttons as Help and Close in the reader's language when the box is
+activated, before it is drawn. Help opens magpie's own guide
+(`webView2Docs`, `https://usemagpie.ai/docs/start#webview2`, whose FAQ
+explains the runtime and gives the install command); Close ends the
+launch. magpie downloads nothing itself — installing the runtime is the
+reader's to run.
+
+The ids are not changed, so the box's return value still says which button
+was pressed — and Windows returns `IDCANCEL` for Escape, Alt+F4 and the
+title bar's X as well as for the button. So **Help is `IDOK` and Close is
+`IDCANCEL`**, and Cancel is made the default (`DM_SETDEFID`): every way of
+dismissing the box that isn't the Help button returns `IDCANCEL` and
+closes. Putting Help on Cancel would open the guide when the reader
+pressed Escape. `TestWebView2ButtonsAreWindowsIDs` guards the two ids.
+
+A TaskDialog with a real hyperlink was tried first and dropped:
+`TaskDialog` itself works on the Windows 10 machine it was tried on, but
+`TaskDialogIndirect` — the only one that takes custom buttons and
+hyperlinks — answered `E_INVALIDARG` there from both Go and C#, for every
+`cbSize` from 16 to 200 and with comctl32 v6 confirmed loaded. A window of
+magpie's own, with a read-only edit to select and copy from, was built and
+then dropped too: a plain box with two buttons is what was asked for.
+
 ### Routing purpose filter
 
 The request heading's purpose menu in [`routing.js`](../../internal/gui/assets/routing.js)
